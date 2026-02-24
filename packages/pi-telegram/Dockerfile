@@ -11,8 +11,7 @@ COPY package.json ./
 
 # Install dependencies
 # Using --legacy-peer-deps to avoid monorepo-related peer dependency conflicts
-# Using --loglevel=verbose so we can debug failures in Coolify logs
-RUN npm install --legacy-peer-deps --loglevel=verbose
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
@@ -32,6 +31,12 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
-# Entry point starts the bot.
-ENTRYPOINT ["node", "dist/main.js"]
+# Copy .pi directory (skills baked in; auth.json is git-ignored and injected via AUTH_JSON env var)
+COPY .pi .pi
+
+# Entrypoint writes auth.json from AUTH_JSON env var, then starts the bot
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["./data"]

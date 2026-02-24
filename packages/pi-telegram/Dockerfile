@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 
 # Install build dependencies for native modules and Alpine compatibility
-RUN apk add --no-cache python3 make g++ libc6-compat cmake git
+RUN apk add --no-cache python3 make g++ libc6-compat cmake
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Runtime dependencies
-RUN apk add --no-cache docker-cli libc6-compat git
+RUN apk add --no-cache docker-cli libc6-compat
 
 # Copy built files and node_modules from builder
 COPY --from=builder /app/package.json ./
@@ -31,10 +31,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
 # Copy .pi directory (auth.json is excluded via .dockerignore; comes from AUTH_JSON env var)
-# The pi-skills submodule is cloned fresh to avoid Coolify submodule issues
+# pi-skills is tracked as regular files in git, so it's included in the build context
 COPY --from=builder /app/.pi ./.pi
-RUN rm -rf .pi/skills/pi-skills \
-    && git clone --depth=1 https://github.com/badlogic/pi-skills .pi/skills/pi-skills
 
 # Entrypoint writes auth.json from AUTH_JSON env var, then starts the bot
 COPY entrypoint.sh ./entrypoint.sh

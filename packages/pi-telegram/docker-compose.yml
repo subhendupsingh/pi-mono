@@ -2,7 +2,7 @@ services:
   pi-telegram:
     build:
       context: .
-      dockerfile: packages/pi-telegram/Dockerfile
+      dockerfile: Dockerfile
     container_name: pi-telegram
     restart: always
     environment:

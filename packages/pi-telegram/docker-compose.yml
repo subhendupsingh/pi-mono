@@ -1,0 +1,25 @@
+services:
+  pi-telegram:
+    build:
+      context: ../../
+      dockerfile: packages/pi-telegram/Dockerfile
+    container_name: pi-telegram
+    restart: always
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    volumes:
+      - ./data:/app/packages/pi-telegram/data
+      - ./.pi:/app/packages/pi-telegram/.pi
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - sandbox
+    command: ["--sandbox=docker:pi-sandbox", "./data"]
+
+  sandbox:
+    image: alpine:latest
+    container_name: pi-sandbox
+    restart: always
+    command: tail -f /dev/null
+    volumes:
+      # Sandbox MUST have access to the exact same data path as the bot
+      - ./data:/app/packages/pi-telegram/data

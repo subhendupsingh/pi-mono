@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+docs
+*.log
+.DS_Store
+data
+.pi
+.env

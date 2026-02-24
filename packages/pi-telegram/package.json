@@ -1,0 +1,40 @@
+{
+  "name": "@mariozechner/pi-telegram",
+  "version": "0.1.0",
+  "description": "Autonomous Telegram bot with coding, browsing, and email reading capabilities",
+  "type": "module",
+  "bin": {
+    "pi-telegram": "dist/main.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.build.json && chmod +x dist/main.js",
+    "dev": "npx tsx --watch src/main.ts ./data",
+    "start": "node dist/main.js ./data",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@mariozechner/pi-agent-core": "^0.54.2",
+    "@mariozechner/pi-ai": "^0.54.2",
+    "@mariozechner/pi-coding-agent": "^0.54.2",
+    "@sinclair/typebox": "^0.34.0",
+    "chalk": "^5.6.2",
+    "croner": "^9.1.0",
+    "diff": "^8.0.2",
+    "dotenv": "^17.3.1",
+    "grammy": "^1.21.1"
+  },
+  "devDependencies": {
+    "@types/diff": "^7.0.2",
+    "@types/node": "^24.3.0",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

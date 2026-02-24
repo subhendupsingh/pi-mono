@@ -33,3 +33,8 @@ pi-*.html
 out.html
 packages/coding-agent/binaries/
 todo.md
+
+# pi-telegram
+packages/pi-telegram/data/
+packages/pi-telegram/.pi/
+packages/pi-telegram/.env

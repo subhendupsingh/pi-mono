@@ -35,6 +35,5 @@ packages/coding-agent/binaries/
 todo.md
 
 # pi-telegram
-packages/pi-telegram/data/
 packages/pi-telegram/.pi/auth.json
 packages/pi-telegram/.env

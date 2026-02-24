@@ -4,6 +4,7 @@ dist
 docs
 *.log
 .DS_Store
-data
+data/*
+!data/MEMORY.md
 .pi/auth.json
 .env

@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 
 # Install build dependencies for native modules and Alpine compatibility
-RUN apk add --no-cache python3 make g++ libc6-compat
+RUN apk add --no-cache python3 make g++ libc6-compat cmake
 
 WORKDIR /app
 

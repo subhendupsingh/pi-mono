@@ -394,21 +394,21 @@ export class TelegramBot implements EventTarget {
 		this.bot.catch((err) => {
 			const ctx = err.ctx;
 			log.error(`Error in update ${ctx.update.update_id}:`, String(err.error));
-			ctx.reply(`Error: ${err.error instanceof Error ? err.error.message : String(err.error)}`).catch(() => {});
+			ctx.reply(`Error: ${err.error instanceof Error ? err.error.message : String(err.error)}`).catch(() => { });
 		});
 
 		// /start
 		this.bot.command("start", (ctx) =>
 			ctx.reply(
 				"I'm your autonomous assistant.\n\n" +
-					"Session commands:\n" +
-					"`/sessions` — list all sessions\n" +
-					"`/new` — start a new session\n" +
-					"`/resume <id>` — resume a session\n" +
-					"`/delete <id>` — delete a session\n\n" +
-					"Other commands:\n" +
-					"`/model` — view or change AI model\n" +
-					"`/stop` — stop current task",
+				"Session commands:\n" +
+				"`/sessions` — list all sessions\n" +
+				"`/new` — start a new session\n" +
+				"`/resume <id>` — resume a session\n" +
+				"`/delete <id>` — delete a session\n\n" +
+				"Other commands:\n" +
+				"`/model` — view or change AI model\n" +
+				"`/stop` — stop current task",
 				{ parse_mode: "Markdown" },
 			),
 		);
@@ -685,8 +685,8 @@ export class TelegramBot implements EventTarget {
 
 			await ctx.reply(
 				`*Status:* ${state.running ? "Working" : "Idle"}\n` +
-					`*Session:* \`${session.id}\` — ${session.title}\n` +
-					`*Model:* \`${current}\``,
+				`*Session:* \`${session.id}\` — ${session.title}\n` +
+				`*Model:* \`${current}\``,
 				{ parse_mode: "Markdown" },
 			);
 		});

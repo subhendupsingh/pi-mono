@@ -5,5 +5,5 @@ docs
 *.log
 .DS_Store
 data
-.pi
+.pi/auth.json
 .env

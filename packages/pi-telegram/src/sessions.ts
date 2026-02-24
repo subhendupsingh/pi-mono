@@ -90,7 +90,7 @@ function writeIndex(workingDir: string, chatId: string, index: SessionsIndex): v
 // ============================================================================
 
 export class SessionManager {
-	constructor(private workingDir: string) {}
+	constructor(private workingDir: string) { }
 
 	// --------------------------------------------------------------------------
 	// Active session

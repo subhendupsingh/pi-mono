@@ -37,7 +37,11 @@ export async function validateSandbox(config: SandboxConfig): Promise<SandboxCon
 	if (containerName === "auto") {
 		try {
 			const result = await execSimple("docker", [
-				"ps", "--filter", "label=pi.role=sandbox", "--format", "{{.Names}}"
+				"ps",
+				"--filter",
+				"label=pi.role=sandbox",
+				"--format",
+				"{{.Names}}",
 			]);
 			const names = result.trim().split("\n").filter(Boolean);
 			if (names.length === 0) {
@@ -142,9 +146,9 @@ class HostExecutor implements Executor {
 			const timeoutHandle =
 				options?.timeout && options.timeout > 0
 					? setTimeout(() => {
-						timedOut = true;
-						killProcessTree(child.pid!);
-					}, options.timeout * 1000)
+							timedOut = true;
+							killProcessTree(child.pid!);
+						}, options.timeout * 1000)
 					: undefined;
 
 			const onAbort = () => {
@@ -212,7 +216,7 @@ Command timed out after ${options?.timeout} seconds`.trim(),
 }
 
 class DockerExecutor implements Executor {
-	constructor(private container: string) { }
+	constructor(private container: string) {}
 
 	async exec(command: string, options?: ExecOptions): Promise<ExecResult> {
 		// Wrap command for docker exec

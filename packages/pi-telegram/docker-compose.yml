@@ -25,5 +25,5 @@ services:
     labels:
       - "pi.role=sandbox"
     volumes:
-      - ${DATA_DIR:-/opt/pi-telegram/data}:/app/data
+      - ${DATA_DIR:-/opt/pi-telegram/data}:/workspace
       - ${PI_DIR:-/opt/pi-telegram/.pi}:/app/.pi

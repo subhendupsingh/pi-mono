@@ -53,6 +53,7 @@ export interface AgentRunner {
 		pendingMessages?: PendingMessage[],
 	): Promise<{ stopReason: string; errorMessage?: string }>;
 	abort(): void;
+	compact(): Promise<{ summary: string; tokensBefore: number }>;
 }
 
 const IMAGE_MIME_TYPES: Record<string, string> = {
@@ -641,6 +642,11 @@ function createRunner(
 	};
 
 	return {
+		async compact() {
+			const result = await session.compact();
+			return { summary: result.summary, tokensBefore: result.tokensBefore };
+		},
+
 		async run(
 			ctx: TelegramContext,
 			_store: ChannelStore,

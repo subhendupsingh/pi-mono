@@ -394,21 +394,23 @@ export class TelegramBot implements EventTarget {
 		this.bot.catch((err) => {
 			const ctx = err.ctx;
 			log.error(`Error in update ${ctx.update.update_id}:`, String(err.error));
-			ctx.reply(`Error: ${err.error instanceof Error ? err.error.message : String(err.error)}`).catch(() => {});
+			ctx.reply(`Error: ${err.error instanceof Error ? err.error.message : String(err.error)}`).catch(() => { });
 		});
 
 		// /start
 		this.bot.command("start", (ctx) =>
 			ctx.reply(
 				"I'm your autonomous assistant.\n\n" +
-					"Session commands:\n" +
-					"`/sessions` — list all sessions\n" +
-					"`/new` — start a new session\n" +
-					"`/resume <id>` — resume a session\n" +
-					"`/delete <id>` — delete a session\n\n" +
-					"Other commands:\n" +
-					"`/model` — view or change AI model\n" +
-					"`/stop` — stop current task",
+				"Session commands:\n" +
+				"`/sessions` — list all sessions\n" +
+				"`/new` — start a new session\n" +
+				"`/resume <id>` — resume a session\n" +
+				"`/delete <id>` — delete a session\n\n" +
+				"Control commands:\n" +
+				"`/model` — view or change AI model\n" +
+				"`/compact` — summarize and compress context\n" +
+				"`/stop` — abort current task\n" +
+				"`stop` — same as /stop (text shortcut)",
 				{ parse_mode: "Markdown" },
 			),
 		);
@@ -677,6 +679,38 @@ export class TelegramBot implements EventTarget {
 			}
 		});
 
+		// /compact — summarize and compress current session context
+		this.bot.command("compact", async (ctx) => {
+			const chatId = ctx.chat.id.toString();
+			const { state } = this.getChannelState(chatId);
+
+			if (state.running) {
+				await ctx.reply("_Cannot compact while busy. Send `stop` first._", { parse_mode: "Markdown" });
+				return;
+			}
+
+			const statusMsg = await ctx.reply("_Compacting context..._", { parse_mode: "Markdown" });
+
+			try {
+				const result = await state.runner.compact();
+				const kb = Math.round(result.tokensBefore / 1000);
+				await ctx.api.editMessageText(
+					ctx.chat.id,
+					statusMsg.message_id,
+					`✅ *Context compacted*\n${kb}k tokens summarized into a checkpoint\.\n_The bot will continue from the summary\._`,
+					{ parse_mode: "MarkdownV2" },
+				);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				await ctx.api.editMessageText(
+					ctx.chat.id,
+					statusMsg.message_id,
+					`_Compaction failed: ${msg}_`,
+					{ parse_mode: "Markdown" },
+				);
+			}
+		});
+
 		// /status
 		this.bot.command("status", async (ctx) => {
 			const chatId = ctx.chat.id.toString();
@@ -685,8 +719,8 @@ export class TelegramBot implements EventTarget {
 
 			await ctx.reply(
 				`*Status:* ${state.running ? "Working" : "Idle"}\n` +
-					`*Session:* \`${session.id}\` — ${session.title}\n` +
-					`*Model:* \`${current}\``,
+				`*Session:* \`${session.id}\` — ${session.title}\n` +
+				`*Model:* \`${current}\``,
 				{ parse_mode: "Markdown" },
 			);
 		});
@@ -697,6 +731,7 @@ export class TelegramBot implements EventTarget {
 			const text = ctx.message.text;
 			const userName = ctx.from?.username || ctx.from?.first_name || "unknown";
 
+			// "stop" text shortcut
 			if (text.toLowerCase().trim() === "stop") {
 				const state = this.channelStates.get(chatId);
 				if (state?.running) {

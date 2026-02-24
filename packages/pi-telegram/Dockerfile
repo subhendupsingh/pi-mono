@@ -34,6 +34,10 @@ COPY --from=builder /app/dist ./dist
 # pi-skills is tracked as regular files in git, so it's included in the build context
 COPY --from=builder /app/.pi ./.pi
 
+# Stage skills to a separate dir that won't be overlaid by named volume.
+# The entrypoint syncs these into the shared /app/.pi/skills volume at startup.
+RUN cp -r /app/.pi/skills /app/.pi-skills-stage
+
 # Entrypoint writes auth.json from AUTH_JSON env var, then starts the bot
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh

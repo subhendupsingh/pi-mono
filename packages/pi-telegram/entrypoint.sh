@@ -1,7 +1,17 @@
 #!/bin/sh
-# Entrypoint: write auth.json from AUTH_JSON env var if provided.
-# Uses node to parse the JSON so that Coolify's escaped quotes (\") are handled correctly.
+# Entrypoint: seed skills volume and write auth.json from env var.
 
+# Seed .pi/skills from the built-in copy if the volume is empty or stale.
+# The Dockerfile copies skills to /app/.pi-skills-stage/ so they survive the volume overlay.
+if [ -d "/app/.pi-skills-stage" ]; then
+    echo "Syncing skills into shared volume..."
+    mkdir -p /app/.pi/skills
+    cp -r /app/.pi-skills-stage/* /app/.pi/skills/ 2>/dev/null || true
+    echo "Skills synced."
+fi
+
+# Write auth.json from AUTH_JSON env var if provided.
+# Uses node to parse the JSON so that Coolify's escaped quotes (\") are handled correctly.
 if [ -n "$AUTH_JSON" ]; then
     echo "Writing auth.json from AUTH_JSON environment variable..."
     mkdir -p .pi

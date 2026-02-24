@@ -1,26 +1,37 @@
 #!/bin/sh
-# Entrypoint: seed skills volume and write auth.json from env var.
+# Entrypoint: seed .pi directory on first run, write auth.json from env var, start bot.
 
-# Seed .pi/skills from the built-in copy if the volume is empty or stale.
-# The Dockerfile copies skills to /app/.pi-skills-stage/ so they survive the volume overlay.
-if [ -d "/app/.pi-skills-stage" ]; then
-    echo "Syncing skills into shared volume..."
-    mkdir -p /app/.pi/skills
-    cp -r /app/.pi-skills-stage/* /app/.pi/skills/ 2>/dev/null || true
-    echo "Skills synced."
+# Seed /app/.pi from the built-in image copy on first run.
+# /app/.pi-stage is baked into the image (not overlaid by bind mount).
+# We use 'cp -n' semantics: only copy files that don't already exist on the host,
+# so user-created files and auth.json are never overwritten.
+if [ -d "/app/.pi-stage" ]; then
+    echo "Seeding .pi directory from image defaults..."
+    mkdir -p /app/.pi
+
+    # Copy each item from staging only if it doesn't exist at destination
+    for item in /app/.pi-stage/*; do
+        name=$(basename "$item")
+        dest="/app/.pi/$name"
+        if [ ! -e "$dest" ]; then
+            cp -r "$item" "$dest"
+            echo "  Seeded: $name"
+        fi
+    done
+
+    echo "Seeding complete."
 fi
 
 # Write auth.json from AUTH_JSON env var if provided.
 # Uses node to parse the JSON so that Coolify's escaped quotes (\") are handled correctly.
 if [ -n "$AUTH_JSON" ]; then
     echo "Writing auth.json from AUTH_JSON environment variable..."
-    mkdir -p .pi
+    mkdir -p /app/.pi
     node -e "
 const fs = require('fs');
 try {
-    // JSON.parse correctly handles both escaped (\") and clean (') JSON
     const parsed = JSON.parse(process.env.AUTH_JSON);
-    fs.writeFileSync('.pi/auth.json', JSON.stringify(parsed, null, 2));
+    fs.writeFileSync('/app/.pi/auth.json', JSON.stringify(parsed, null, 2));
     console.log('auth.json written successfully.');
 } catch (e) {
     console.error('Failed to parse AUTH_JSON: ' + e.message);
@@ -29,7 +40,7 @@ try {
 }
 "
 else
-    echo "No AUTH_JSON env var found, using existing .pi/auth.json if present."
+    echo "No AUTH_JSON env var found, using existing /app/.pi/auth.json if present."
 fi
 
 # Hand off to the actual bot

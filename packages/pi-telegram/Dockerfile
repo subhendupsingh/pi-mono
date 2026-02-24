@@ -30,15 +30,12 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
-# Copy .pi directory (auth.json is excluded via .dockerignore; comes from AUTH_JSON env var)
-# pi-skills is tracked as regular files in git, so it's included in the build context
-COPY --from=builder /app/.pi ./.pi
+# Stage the entire .pi directory so it survives the bind mount overlay at runtime.
+# auth.json is excluded via .dockerignore; it comes from the AUTH_JSON env var.
+# The entrypoint seeds /app/.pi from here on first run (only missing files).
+COPY --from=builder /app/.pi /app/.pi-stage
 
-# Stage skills to a separate dir that won't be overlaid by named volume.
-# The entrypoint syncs these into the shared /app/.pi/skills volume at startup.
-RUN cp -r /app/.pi/skills /app/.pi-skills-stage
-
-# Entrypoint writes auth.json from AUTH_JSON env var, then starts the bot
+# Entrypoint seeds .pi, writes auth.json from AUTH_JSON env var, then starts the bot
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 

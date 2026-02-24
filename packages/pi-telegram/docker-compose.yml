@@ -8,9 +8,11 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - AUTH_JSON=${AUTH_JSON}
+      - DATA_DIR=${DATA_DIR:-/opt/pi-telegram/data}
+      - PI_DIR=${PI_DIR:-/opt/pi-telegram/.pi}
     volumes:
-      - pi-telegram-data:/app/data
-      - pi-skills:/app/.pi/skills
+      - ${DATA_DIR:-/opt/pi-telegram/data}:/app/data
+      - ${PI_DIR:-/opt/pi-telegram/.pi}:/app/.pi
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - sandbox
@@ -23,9 +25,5 @@ services:
     labels:
       - "pi.role=sandbox"
     volumes:
-      - pi-telegram-data:/app/data
-      - pi-skills:/app/.pi/skills
-
-volumes:
-  pi-telegram-data:
-  pi-skills:
+      - ${DATA_DIR:-/opt/pi-telegram/data}:/app/data
+      - ${PI_DIR:-/opt/pi-telegram/.pi}:/app/.pi

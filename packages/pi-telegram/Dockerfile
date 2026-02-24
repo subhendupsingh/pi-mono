@@ -1,17 +1,18 @@
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
-# Install build dependencies for native modules (like koffi)
-RUN apk add --no-cache python3 make g++
+# Install build dependencies for native modules and Alpine compatibility
+RUN apk add --no-cache python3 make g++ libc6-compat
 
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
 
-# Install dependencies from npm
-# This will pull @mariozechner/* from the public registry
-RUN npm install
+# Install dependencies
+# Using --legacy-peer-deps to avoid monorepo-related peer dependency conflicts
+# Using --loglevel=verbose so we can debug failures in Coolify logs
+RUN npm install --legacy-peer-deps --loglevel=verbose
 
 # Copy source code
 COPY . .
@@ -23,11 +24,11 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Install docker-cli for the sandbox
-RUN apk add --no-cache docker-cli
+# Runtime dependencies
+RUN apk add --no-cache docker-cli libc6-compat
 
 # Copy built files and node_modules from builder
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 

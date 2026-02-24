@@ -86,9 +86,10 @@ if (!TELEGRAM_BOT_TOKEN) {
 
 const { workingDir, sandbox, piDir } = {
 	workingDir: parsedArgs.workingDir,
-	sandbox: (parsedArgs.sandbox.type === "docker" && process.env.SANDBOX_CONTAINER)
-		? ({ type: "docker", container: process.env.SANDBOX_CONTAINER } as SandboxConfig)
-		: parsedArgs.sandbox,
+	sandbox:
+		parsedArgs.sandbox.type === "docker" && process.env.SANDBOX_CONTAINER
+			? ({ type: "docker", container: process.env.SANDBOX_CONTAINER } as SandboxConfig)
+			: parsedArgs.sandbox,
 	piDir: parsedArgs.piDir || resolve(".pi"),
 };
 

@@ -7,18 +7,18 @@ services:
     restart: always
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - SANDBOX_CONTAINER=pi-sandbox
+      - SANDBOX_CONTAINER=${SANDBOX_CONTAINER}
     volumes:
       - pi-telegram-data:/app/packages/pi-telegram/data
       - pi-telegram-config:/app/packages/pi-telegram/.pi
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - sandbox
-    command: ["--sandbox=docker:pi-sandbox", "./data"]
+    command: ["--sandbox=docker:${SANDBOX_CONTAINER}", "./data"]
 
   sandbox:
     image: alpine:latest
-    container_name: pi-sandbox
+    container_name: ${SANDBOX_CONTAINER}
     restart: always
     command: tail -f /dev/null
     volumes:

@@ -18,9 +18,9 @@ export function parseSandboxArg(value: string): SandboxConfig {
 	process.exit(1);
 }
 
-export async function validateSandbox(config: SandboxConfig): Promise<void> {
+export async function validateSandbox(config: SandboxConfig): Promise<SandboxConfig> {
 	if (config.type === "host") {
-		return;
+		return config;
 	}
 
 	// Check if Docker is available
@@ -31,21 +31,44 @@ export async function validateSandbox(config: SandboxConfig): Promise<void> {
 		process.exit(1);
 	}
 
+	let containerName = config.container;
+
+	// Auto-discover sandbox container by Docker label
+	if (containerName === "auto") {
+		try {
+			const result = await execSimple("docker", [
+				"ps", "--filter", "label=pi.role=sandbox", "--format", "{{.Names}}"
+			]);
+			const names = result.trim().split("\n").filter(Boolean);
+			if (names.length === 0) {
+				console.error("Error: No running container found with label 'pi.role=sandbox'.");
+				console.error("Make sure the sandbox service is running.");
+				process.exit(1);
+			}
+			containerName = names[0];
+			console.log(`  Auto-discovered sandbox container: '${containerName}'`);
+		} catch (err) {
+			console.error(`Error: Failed to auto-discover sandbox container: ${err}`);
+			process.exit(1);
+		}
+	}
+
 	// Check if container exists and is running
 	try {
-		const result = await execSimple("docker", ["inspect", "-f", "{{.State.Running}}", config.container]);
+		const result = await execSimple("docker", ["inspect", "-f", "{{.State.Running}}", containerName]);
 		if (result.trim() !== "true") {
-			console.error(`Error: Container '${config.container}' is not running.`);
-			console.error(`Start it with: docker start ${config.container}`);
+			console.error(`Error: Container '${containerName}' is not running.`);
+			console.error(`Start it with: docker start ${containerName}`);
 			process.exit(1);
 		}
 	} catch {
-		console.error(`Error: Container '${config.container}' does not exist.`);
+		console.error(`Error: Container '${containerName}' does not exist.`);
 		console.error("Create it with: ./docker.sh create <data-dir>");
 		process.exit(1);
 	}
 
-	console.log(`  Docker container '${config.container}' is running.`);
+	console.log(`  Docker container '${containerName}' is running.`);
+	return { type: "docker", container: containerName };
 }
 
 function execSimple(cmd: string, args: string[]): Promise<string> {
@@ -119,9 +142,9 @@ class HostExecutor implements Executor {
 			const timeoutHandle =
 				options?.timeout && options.timeout > 0
 					? setTimeout(() => {
-							timedOut = true;
-							killProcessTree(child.pid!);
-						}, options.timeout * 1000)
+						timedOut = true;
+						killProcessTree(child.pid!);
+					}, options.timeout * 1000)
 					: undefined;
 
 			const onAbort = () => {
@@ -189,7 +212,7 @@ Command timed out after ${options?.timeout} seconds`.trim(),
 }
 
 class DockerExecutor implements Executor {
-	constructor(private container: string) {}
+	constructor(private container: string) { }
 
 	async exec(command: string, options?: ExecOptions): Promise<ExecResult> {
 		// Wrap command for docker exec

@@ -84,16 +84,11 @@ if (!TELEGRAM_BOT_TOKEN) {
 	process.exit(1);
 }
 
-const { workingDir, sandbox, piDir } = {
-	workingDir: parsedArgs.workingDir,
-	sandbox:
-		parsedArgs.sandbox.type === "docker" && process.env.SANDBOX_CONTAINER
-			? ({ type: "docker", container: process.env.SANDBOX_CONTAINER } as SandboxConfig)
-			: parsedArgs.sandbox,
-	piDir: parsedArgs.piDir || resolve(".pi"),
-};
+const workingDir = parsedArgs.workingDir;
+const parsedSandbox = parsedArgs.sandbox;
+const piDir = parsedArgs.piDir || resolve(".pi");
 
-await validateSandbox(sandbox);
+const sandbox = await validateSandbox(parsedSandbox);
 
 // ============================================================================
 // Start

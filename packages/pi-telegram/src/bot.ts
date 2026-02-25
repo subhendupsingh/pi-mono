@@ -697,8 +697,8 @@ export class TelegramBot implements EventTarget {
 				await ctx.api.editMessageText(
 					ctx.chat.id,
 					statusMsg.message_id,
-					`✅ *Context compacted*\n${kb}k tokens summarized into a checkpoint\.\n_The bot will continue from the summary\._`,
-					{ parse_mode: "MarkdownV2" },
+					`✅ *Context compacted*\n${kb}k tokens summarized into a checkpoint.\n_The bot will continue from the summary._`,
+					{ parse_mode: "Markdown" },
 				);
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);

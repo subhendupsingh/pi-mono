@@ -6,56 +6,41 @@
 # but inside the container we always use /app/.pi
 CONTAINER_PI_DIR="/app/.pi"
 
+# The actual skills are nested: .pi/skills/pi-skills/
+SKILLS_STAGE_DIR="/app/.pi-stage/skills/pi-skills"
+SKILLS_DEST_DIR="$CONTAINER_PI_DIR/skills/pi-skills"
+
 echo "=== Entrypoint Debug ==="
 echo "Container PI_DIR: $CONTAINER_PI_DIR"
 echo "Host PI_DIR (env var): '${PI_DIR:-(not set)}'"
+echo "Skills stage dir: $SKILLS_STAGE_DIR"
+echo "Skills dest dir: $SKILLS_DEST_DIR"
 
 # Seed from .pi-stage to the actual .pi directory
 # .pi-stage is baked into the image (not overlaid by bind mount).
 if [ -d "/app/.pi-stage" ]; then
-    echo ".pi-stage exists, checking contents:"
-    ls -la /app/.pi-stage/
+    echo ".pi-stage exists, checking structure:"
+    find /app/.pi-stage -maxdepth 3 -type d | head -20
     
     echo "Ensuring PI_DIR exists: $CONTAINER_PI_DIR"
     mkdir -p "$CONTAINER_PI_DIR"
     
     echo "Current PI_DIR contents:"
     ls -la "$CONTAINER_PI_DIR" 2>/dev/null || echo "(empty or doesn't exist)"
-    
-    echo "Syncing .pi directory from image defaults..."
 
-    # Copy each item from staging
+    # First, copy any top-level items from .pi-stage (like auth.json template, etc.)
+    echo "Copying top-level items from .pi-stage..."
     for item in /app/.pi-stage/*; do
-        # Skip if glob didn't match anything
         [ -e "$item" ] || continue
-        
         name=$(basename "$item")
         dest="$CONTAINER_PI_DIR/$name"
         
-        echo "Processing: $name"
-
-        # Special handling for pi-skills: always merge to get new skills
-        if [ "$name" = "pi-skills" ] && [ -d "$item" ]; then
-            echo "  Merging pi-skills..."
-            mkdir -p "$dest"
-            echo "  Skills in stage:"
-            ls "$item/"
-            for skill in "$item"/*; do
-                # Skip if glob didn't match
-                [ -e "$skill" ] || continue
-                
-                skill_name=$(basename "$skill")
-                skill_dest="$dest/$skill_name"
-                if [ ! -e "$skill_dest" ]; then
-                    echo "    Copying new skill: $skill_name"
-                    cp -r "$skill" "$skill_dest"
-                    echo "    Added skill: $skill_name"
-                else
-                    echo "    Skill exists: $skill_name"
-                fi
-            done
-        # For other items, only copy if they don't exist (preserve user files)
-        elif [ ! -e "$dest" ]; then
+        # Skip the 'skills' directory for now (handled separately)
+        if [ "$name" = "skills" ]; then
+            continue
+        fi
+        
+        if [ ! -e "$dest" ]; then
             echo "  Seeding: $name"
             cp -r "$item" "$dest"
         else
@@ -63,12 +48,34 @@ if [ -d "/app/.pi-stage" ]; then
         fi
     done
 
-    echo "Seeding complete. Final PI_DIR contents:"
-    ls -la "$CONTAINER_PI_DIR"
-    if [ -d "$CONTAINER_PI_DIR/pi-skills" ]; then
-        echo "Skills in PI_DIR:"
-        ls "$CONTAINER_PI_DIR/pi-skills/"
+    # Now handle skills merging: .pi-stage/skills/pi-skills/ -> .pi/skills/pi-skills/
+    if [ -d "$SKILLS_STAGE_DIR" ]; then
+        echo "Merging skills from $SKILLS_STAGE_DIR to $SKILLS_DEST_DIR..."
+        mkdir -p "$SKILLS_DEST_DIR"
+        
+        echo "Skills in stage:"
+        ls "$SKILLS_STAGE_DIR/"
+        
+        for skill in "$SKILLS_STAGE_DIR"/*; do
+            [ -e "$skill" ] || continue
+            
+            skill_name=$(basename "$skill")
+            skill_dest="$SKILLS_DEST_DIR/$skill_name"
+            
+            if [ ! -e "$skill_dest" ]; then
+                echo "    Copying new skill: $skill_name"
+                cp -r "$skill" "$skill_dest"
+                echo "    Added skill: $skill_name"
+            else
+                echo "    Skill exists: $skill_name"
+            fi
+        done
+    else
+        echo "WARNING: Skills stage dir not found at $SKILLS_STAGE_DIR"
     fi
+
+    echo "Seeding complete. Final PI_DIR structure:"
+    find "$CONTAINER_PI_DIR" -maxdepth 3 -type d 2>/dev/null | head -20
 else
     echo "WARNING: /app/.pi-stage does not exist!"
 fi

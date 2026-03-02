@@ -3,19 +3,35 @@
 
 # Seed /app/.pi from the built-in image copy on first run.
 # /app/.pi-stage is baked into the image (not overlaid by bind mount).
-# We use 'cp -n' semantics: only copy files that don't already exist on the host,
-# so user-created files and auth.json are never overwritten.
+# We merge pi-skills from the image to ensure new skills are available,
+# while preserving user-created files and auth.json.
 if [ -d "/app/.pi-stage" ]; then
-    echo "Seeding .pi directory from image defaults..."
+    echo "Syncing .pi directory from image defaults..."
     mkdir -p /app/.pi
 
-    # Copy each item from staging only if it doesn't exist at destination
+    # Copy each item from staging
     for item in /app/.pi-stage/*; do
         name=$(basename "$item")
         dest="/app/.pi/$name"
-        if [ ! -e "$dest" ]; then
+
+        # Special handling for pi-skills: always merge to get new skills
+        if [ "$name" = "pi-skills" ] && [ -d "$item" ]; then
+            echo "  Merging: $name"
+            mkdir -p "$dest"
+            for skill in "$item"/*; do
+                skill_name=$(basename "$skill")
+                skill_dest="$dest/$skill_name"
+                if [ ! -e "$skill_dest" ]; then
+                    cp -r "$skill" "$skill_dest"
+                    echo "    Added skill: $skill_name"
+                fi
+            done
+        # For other items, only copy if they don't exist (preserve user files)
+        elif [ ! -e "$dest" ]; then
             cp -r "$item" "$dest"
             echo "  Seeded: $name"
+        else
+            echo "  Skipped (exists): $name"
         fi
     done
 

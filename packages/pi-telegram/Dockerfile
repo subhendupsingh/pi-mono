@@ -33,7 +33,7 @@ COPY --from=builder /app/dist ./dist
 # Stage the entire .pi directory so it survives the bind mount overlay at runtime.
 # auth.json is excluded via .dockerignore; it comes from the AUTH_JSON env var.
 # The entrypoint seeds /app/.pi from here on first run (only missing files).
-COPY --from=builder /app/.pi /app/.pi-stage
+COPY --from=builder /app/.pi /app/.pi
 
 # Entrypoint seeds .pi, writes auth.json from AUTH_JSON env var, then starts the bot
 COPY entrypoint.sh ./entrypoint.sh

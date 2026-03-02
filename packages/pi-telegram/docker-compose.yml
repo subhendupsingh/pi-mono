@@ -8,8 +8,8 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - AUTH_JSON=${AUTH_JSON}
-      - DATA_DIR=${DATA_DIR:-/opt/pi-telegram/data}
-      - PI_DIR=${PI_DIR:-/opt/pi-telegram/.pi}
+      # Note: DATA_DIR and PI_DIR env vars are used for volume mount sources only.
+      # Inside the container, paths are always /app/data and /app/.pi
     volumes:
       - ${DATA_DIR:-/opt/pi-telegram/data}:/app/data
       - ${PI_DIR:-/opt/pi-telegram/.pi}:/app/.pi
